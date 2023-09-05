@@ -27,6 +27,7 @@ int main(void) {
     InitWindow(screenWidth, screenHeight, "Game - The game - test window"); // Abrindo janela
     
     InitAudioDevice(); // Abrindo dispositivo de audio
+    ToggleFullscreen();
     
     Image image = LoadImage("C:\\Users\\Silvana\\Desktop\\Game - the game\\Sprites\\5.png");
     Texture2D background = LoadTextureFromImage(image);
@@ -71,7 +72,7 @@ int main(void) {
             
             
             // Movendo para direita e para esquerda
-            if(IsKeyDown(KEY_D)) {
+            if(IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT)) {
                 player.characterVelocity.x = characterSpeed;
                 
                 if(frameRec.width < 0) {
@@ -79,7 +80,7 @@ int main(void) {
                     //frameRec2.width = -frameRec2.width;
                 } 
             }
-            else if(IsKeyDown(KEY_A)) {
+            else if(IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT)) {
                 player.characterVelocity.x = -characterSpeed;
                 
                 if(frameRec.width > 0) {
@@ -146,7 +147,7 @@ int main(void) {
         
         BeginDrawing();
             
-            ClearBackground(RAYWHITE);
+            ClearBackground(BLACK);
             
             DrawTexture(background, screenWidth/2 - background.width/2, screenHeight/2 - background.height/2, WHITE);
             
