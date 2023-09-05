@@ -1,0 +1,244 @@
+#include "raylib.h"
+#include "raymath.h"
+#include <stdio.h>
+
+typedef struct{
+    Vector2 characterPos;
+    Vector2 characterVelocity;
+    bool characterMoving;
+    bool wasCharacterOnGround;
+    bool characterIsOnGround;
+    bool isJumping;
+} Player;
+
+typedef struct {
+    Rectangle rect; // Retângulo que representa a plataforma
+    Color color;    // Cor da plataforma (opcional)
+} Platform;
+
+
+
+bool IsCharacterOnGround(Texture2D character, Vector2 characterPos, const int groundYPos, Platform platforms[], int numPlatforms);
+
+
+int main(void) {
+    const int screenWidth = 1280;
+    const int screenHeight = 720;
+    
+    const int characterSpeed = 5;
+    const int gravity = 1;
+    const int groundYPos = 3.1 * screenHeight / 4;
+    
+    //const int jumpUpFrame = 3;
+    //const int jumpDownFrame = 3;
+    
+    InitWindow(screenWidth, screenHeight, "Game - The game - test window"); // Abrindo janela
+    
+    InitAudioDevice(); // Abrindo dispositivo de audio
+    //ToggleFullscreen();
+
+
+    
+    Image image = LoadImage("D:\\Users\\dsfs\\Desktop\\Game\\The Game\\5.png");
+    Texture2D background = LoadTextureFromImage(image);
+    Texture2D character = LoadTexture("D:\\Users\\dsfs\\Desktop\\Game\\The Game\\George_1.png");
+    Texture2D characterJump = LoadTexture("D:\\Users\\dsfs\\Desktop\\Game\\The Game\\George_Pulo.png");
+    UnloadImage(image);
+    
+    unsigned int numFrames = 4; // Declarando o numero de frames da animacao 1 (correr)
+    unsigned int numFrames2 = 1; // Declarando o numero de frames da animacao 2 (parar)
+    int frameWidth = character.width / numFrames; // Comprimento de um frame da animacao 1
+    int frame2Width = characterJump.width / numFrames2; // Comprimento de um frame da animacao 2
+    
+    Rectangle frameRec = {0.0f, 0.0f, (float)frameWidth, (float)character.height};
+    Rectangle frameRec2 = {0.0f, 0.0f, (float)frame2Width, (float)characterJump.height};
+
+    Player player = {0};
+    player.characterPos = (Vector2) {groundYPos, screenHeight / 2.0f};
+    player.characterVelocity = (Vector2) {0.0f, 0.0f};
+    
+    Sound footstepSound = LoadSound("D:\\Users\\dsfs\\Desktop\\Game\\The Game\\Single-footstep-in-grass-A.mp3");
+    Sound landingSound = LoadSound("D:\\Users\\dsfs\\Desktop\\Game\\The Game\\Single-footstep-in-grass-B.mp3");
+    Sound soundtrack = LoadSound("D:\\Users\\dsfs\\Desktop\\Game\\The Game\\8bit_Genshin_Impact___Faruzan_Theme_Master_of_Ingenious_Devices_Chiptune_CoverMP3_160K.mp3");
+
+
+    // Crie um array de plataformas
+    int qtd_plataformas = 4;
+    Platform platforms[qtd_plataformas]; // 3 plataformas no exemplo
+
+    // Defina as informações das plataformas
+    platforms[0].rect.x = 900.0f;
+    platforms[0].rect.y = groundYPos - 150.0f;
+    platforms[0].rect.width = 200.0f;
+    platforms[0].rect.height = 20.0f;
+    platforms[0].color = GRAY;
+
+    platforms[1].rect.x = 550.0f;
+    platforms[1].rect.y = groundYPos - 250.0f;
+    platforms[1].rect.width = 200.0f;
+    platforms[1].rect.height = 20.0f;
+    platforms[1].color = GRAY;
+
+    platforms[2].rect.x = 200.0f;
+    platforms[2].rect.y = groundYPos - 350.0f;
+    platforms[2].rect.width = 200.0f;
+    platforms[2].rect.height = 20.0f;
+    platforms[2].color = GRAY;
+
+    platforms[3].rect = (Rectangle) {0.0f ,522.0f, 1280.0f, 198.0f};
+    platforms[3].color = RED;
+
+    
+    
+    unsigned int frameDelay = 3;
+    unsigned int frameDelayCounter = 0;
+    unsigned int frameIndex = 0;
+    //unsigned frameIndex2 = 0;
+    
+    SetTargetFPS(60);
+    
+    PlaySound(soundtrack);
+    
+    while(!WindowShouldClose()) { // Enquanto nao apertar ESC      
+
+        printf("\t%d\n", IsCharacterOnGround(character, player.characterPos, groundYPos, platforms, 4));
+        
+        if(IsCharacterOnGround(character, player.characterPos, groundYPos, platforms, qtd_plataformas)) { // Se o personagem estiver no chao
+            player.characterVelocity.y = 0;
+            player.isJumping = false;
+
+        
+            if (IsCharacterOnGround(character, player.characterPos, groundYPos, platforms, qtd_plataformas)) {
+                player.characterVelocity.y = 0;
+                player.isJumping = false;
+
+                if (IsKeyDown(KEY_SPACE)) {
+                    player.characterVelocity.y = -4 * characterSpeed;
+                    player.isJumping = true;
+                }
+
+                if (IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT)) {
+                    player.characterVelocity.x = characterSpeed;
+                } 
+                else if (IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT)) {
+                    player.characterVelocity.x = -characterSpeed;
+                } 
+                else {
+                    player.characterVelocity.x = 0;
+                }
+            } 
+            else {
+                player.isJumping = true;
+                player.characterVelocity.y += gravity;
+
+                if (IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT)) {
+                    player.characterVelocity.x = characterSpeed;
+                } 
+                else if (IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT)) {
+                    player.characterVelocity.x = -characterSpeed;
+                } 
+                else {
+                    player.characterVelocity.x = 0;
+                }
+            }
+        
+            player.characterMoving = player.characterVelocity.x != 0.0f || player.characterVelocity.y != 0.0f;
+            
+            
+            player.wasCharacterOnGround = IsCharacterOnGround(character, player.characterPos, groundYPos, platforms, qtd_plataformas);
+            player.characterPos = Vector2Add(player.characterPos, player.characterVelocity);
+            player.characterIsOnGround = IsCharacterOnGround(character, player.characterPos, groundYPos, platforms, qtd_plataformas);
+            
+            if(player.characterIsOnGround) {
+                player.characterVelocity.y = 0;
+                player.characterPos.y = groundYPos - character.height;
+                
+                if(!player.wasCharacterOnGround) {
+                    PlaySound(landingSound);
+                }    
+            }
+            else {
+                player.characterVelocity.y += gravity;
+            } 
+        }
+        
+    
+        frameDelayCounter++;
+        
+        if(frameDelayCounter > frameDelay) {
+            frameDelayCounter = 0;
+            
+            if(player.characterMoving) { // Se o personagem estiver se movendo, atualiza o frame
+                
+                if(player.characterIsOnGround) {
+                    frameIndex++;
+                    frameIndex %= numFrames;
+                    
+                    if(frameIndex == 0 || frameIndex == 2) {
+                        PlaySound(footstepSound);
+                    }
+                    
+                    frameRec.x = (float) frameWidth * frameIndex;
+                }
+                else {
+                    //if(player.characterVelocity.y < 0) {
+                        //frameIndex = jumpUpFrame;
+                        frameRec2.x = (float) frame2Width;
+                    //}    
+                        
+                }
+                
+            }
+            else {
+                if(player.characterIsOnGround) {
+                    frameRec.x = (float) frameWidth * 2;
+                }    
+            }    
+        }    
+        
+        BeginDrawing();
+            
+            ClearBackground(BLACK);
+            
+            DrawTexture(background, screenWidth/2 - background.width/2, screenHeight/2 - background.height/2, WHITE);
+
+            DrawRectangleRec(platforms[0].rect, platforms[0].color);
+            DrawRectangleRec(platforms[1].rect, platforms[1].color);
+            DrawRectangleRec(platforms[2].rect, platforms[2].color);
+            DrawRectangleRec(platforms[3].rect, platforms[3].color);
+
+            DrawRectangleRec((Rectangle){player.characterPos.x+60, player.characterPos.y+100, 40, 20}, YELLOW);
+
+
+
+            
+            if(!player.characterMoving && player.characterIsOnGround) {
+                DrawTextureRec(character, frameRec, player.characterPos, WHITE);
+            }
+            else if(!player.characterIsOnGround) {
+                DrawTextureRec(characterJump, frameRec2, player.characterPos, WHITE);
+            }    
+            else {
+                DrawTextureRec(character , frameRec, player.characterPos, WHITE);
+            } 
+            
+        EndDrawing();
+    }
+
+    CloseAudioDevice(); //Fechando o dispositivo de audio
+    CloseWindow(); //Fechando janela
+    
+    return 0;
+}
+
+bool IsCharacterOnGround(Texture2D character, Vector2 characterPos, const int groundYPos, Platform platforms[], int numPlatforms) {
+    for (int i = 0; i < numPlatforms; i++) {
+        if (CheckCollisionRecs(
+                (Rectangle){characterPos.x+60, characterPos.y+100, 40, 20},
+                platforms[i].rect)) {
+            return true;
+        }
+    }
+
+    return false;
+}
