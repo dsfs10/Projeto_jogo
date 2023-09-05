@@ -29,9 +29,9 @@ int main(void) {
     InitAudioDevice(); // Abrindo dispositivo de audio
     ToggleFullscreen();
     
-    Image image = LoadImage("C:\\Users\\Silvana\\Desktop\\Game - the game\\Sprites\\5.png");
+    Image image = LoadImage("D:\\Users\\dsfs\\Desktop\\Game\\5.png");
     Texture2D background = LoadTextureFromImage(image);
-    Texture2D character = LoadTexture("C:\\Users\\Silvana\\Downloads\\George (1).png");
+    Texture2D character = LoadTexture("D:\\Users\\dsfs\\Desktop\\Game\\George (1).png");
     //Texture2D characterStop = LoadTexture("C:\\Users\\Silvana\\Desktop\\Game - the game\\Sprites\\man_jumping.png");
     UnloadImage(image);
     
@@ -47,9 +47,9 @@ int main(void) {
     player.characterPos = (Vector2) {groundYPos, screenHeight / 2.0f};
     player.characterVelocity = (Vector2) {0.0f, 0.0f};
     
-    Sound footstepSound = LoadSound("C:\\Users\\Silvana\\Desktop\\Game - the game\\Sprites\\Single-footstep-in-grass-A.mp3");
-    Sound landingSound = LoadSound("C:\\Users\\Silvana\\Desktop\\Game - the game\\Sprites\\Single-footstep-in-grass-B.mp3");
-    Sound soundtrack = LoadSound("C:\\Users\\Silvana\\Desktop\\Game - the game\\Sprites\\08 - Minecraft.mp3");
+    Sound footstepSound = LoadSound("D:\\Users\\dsfs\\Desktop\\Game\\Single-footstep-in-grass-A.mp3");
+    Sound landingSound = LoadSound("D:\\Users\\dsfs\\Desktop\\Game\\Single-footstep-in-grass-B.mp3");
+    Sound soundtrack = LoadSound("D:\\Users\\dsfs\\Desktop\\Game\\[8bit] Genshin Impact _ Faruzan Theme (Master of Ingenious Devices) [Chiptune Cover](MP3_160K).mp3");
     
     
     unsigned int frameDelay = 3;
