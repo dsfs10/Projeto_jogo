@@ -19,39 +19,39 @@ int main(void) {
     
     const int characterSpeed = 5;
     const int gravity = 1;
-    const int groundYPos = 2.9 * screenHeight / 4;
+    const int groundYPos = 3.1 * screenHeight / 4;
     
     const int jumpUpFrame = 3;
-    const int jumpDownFrame = 4;
+    const int jumpDownFrame = 3;
     
     InitWindow(screenWidth, screenHeight, "Game - The game - test window"); // Abrindo janela
     
     InitAudioDevice(); // Abrindo dispositivo de audio
     
-    Image image = LoadImage("./Sprites/5.png");
+    Image image = LoadImage("C:\\Users\\Silvana\\Desktop\\Game - the game\\Sprites\\5.png");
     Texture2D background = LoadTextureFromImage(image);
-    Texture2D character = LoadTexture("./Sprites/man_running.png");
-    Texture2D characterStop = LoadTexture("./Sprites/man_jumping.png");
+    Texture2D character = LoadTexture("C:\\Users\\Silvana\\Downloads\\George (1).png");
+    //Texture2D characterStop = LoadTexture("C:\\Users\\Silvana\\Desktop\\Game - the game\\Sprites\\man_jumping.png");
     UnloadImage(image);
     
-    unsigned int numFrames = 8; // Declarando o numero de frames da animacao 1 (correr)
-    unsigned int numFrames2 = 6; // Declarando o numero de frames da animacao 2 (parar)
+    unsigned int numFrames = 4; // Declarando o numero de frames da animacao 1 (correr)
+    //unsigned int numFrames2 = 6; // Declarando o numero de frames da animacao 2 (parar)
     int frameWidth = character.width / numFrames; // Comprimento de um frame da animacao 1
-    int frame2Width = characterStop.width / numFrames2; // Comprimento de um frame da animacao 2
+    //int frame2Width = characterStop.width / numFrames2; // Comprimento de um frame da animacao 2
     
     Rectangle frameRec = {0.0f, 0.0f, (float)frameWidth, (float)character.height};
-    Rectangle frameRec2 = {0.0f, 0.0f, (float)frame2Width, (float)characterStop.height};
+    //Rectangle frameRec2 = {0.0f, 0.0f, (float)frame2Width, (float)characterStop.height};
 
     Player player = {0};
     player.characterPos = (Vector2) {groundYPos, screenHeight / 2.0f};
     player.characterVelocity = (Vector2) {0.0f, 0.0f};
     
-    Sound footstepSound = LoadSound("./Sprites/Single-footstep-in-grass-A.mp3");
-    Sound landingSound = LoadSound("./Sprites/Single-footstep-in-grass-B.mp3");
-    Sound soundtrack = LoadSound("./Sprites/08 - Minecraft.mp3");
+    Sound footstepSound = LoadSound("C:\\Users\\Silvana\\Desktop\\Game - the game\\Sprites\\Single-footstep-in-grass-A.mp3");
+    Sound landingSound = LoadSound("C:\\Users\\Silvana\\Desktop\\Game - the game\\Sprites\\Single-footstep-in-grass-B.mp3");
+    Sound soundtrack = LoadSound("C:\\Users\\Silvana\\Desktop\\Game - the game\\Sprites\\08 - Minecraft.mp3");
     
     
-    unsigned int frameDelay = 7;
+    unsigned int frameDelay = 3;
     unsigned int frameDelayCounter = 0;
     unsigned int frameIndex = 0;
     //unsigned frameIndex2 = 0;
@@ -76,7 +76,7 @@ int main(void) {
                 
                 if(frameRec.width < 0) {
                     frameRec.width = -frameRec.width;
-                    frameRec2.width = -frameRec2.width;
+                    //frameRec2.width = -frameRec2.width;
                 } 
             }
             else if(IsKeyDown(KEY_A)) {
@@ -84,7 +84,7 @@ int main(void) {
                 
                 if(frameRec.width > 0) {
                     frameRec.width = -frameRec.width;
-                    frameRec2.width = -frameRec2.width;
+                    //frameRec2.width = -frameRec2.width;
                 }    
             }
             else {
@@ -123,7 +123,7 @@ int main(void) {
                     frameIndex++;
                     frameIndex %= numFrames;
                     
-                    if(frameIndex == 0 || frameIndex == 4) {
+                    if(frameIndex == 0 || frameIndex == 2) {
                         PlaySound(footstepSound);
                     }    
                 }
@@ -139,7 +139,7 @@ int main(void) {
             }
             else {
                 if(player.characterIsOnGround) {
-                    frameRec2.x = (float) frame2Width * 3;
+                    frameRec.x = (float) frameWidth * 2;
                 }    
             }    
         }    
@@ -151,7 +151,7 @@ int main(void) {
             DrawTexture(background, screenWidth/2 - background.width/2, screenHeight/2 - background.height/2, WHITE);
             
             if(!player.characterMoving && player.characterIsOnGround) {
-                DrawTextureRec(characterStop, frameRec2, player.characterPos, WHITE);
+                DrawTextureRec(character, frameRec, player.characterPos, WHITE);
             }
             else {
                 DrawTextureRec(character , frameRec, player.characterPos, WHITE);
