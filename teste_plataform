@@ -26,6 +26,7 @@ int main(void) {
     const int characterSpeed = 5;
     const int gravity = 1;
     const int groundYPos = 3.1 * screenHeight / 4; // Posição do chão
+    int wallCollision = 0;
 
     //const int jumpUpFrame = 3;
     //const int jumpDownFrame = 4;
@@ -35,29 +36,39 @@ int main(void) {
     //ToggleFullscreen();
 
     // Carregue as texturas e sons (ajuste os caminhos conforme necessário)
-    Image image = LoadImage("D:\\Users\\dsfs\\Desktop\\Game\\The Game\\5.png");
+    Image image = LoadImage("C:\\Users\\Silvana\\Desktop\\Game - the game\\Sprites\\5.png");
     Texture2D background = LoadTextureFromImage(image);
     UnloadImage(image);
 
-    Texture2D character = LoadTexture("D:\\Users\\dsfs\\Desktop\\Game\\The Game\\George_1.png");
-    Texture2D characterJump = LoadTexture("D:\\Users\\dsfs\\Desktop\\Game\\The Game\\George_Pulo.png");
+    Texture2D character = LoadTexture("C:\\Users\\Silvana\\Desktop\\Game - the game\\Sprites\\George (1).png");
+    Texture2D characterJump = LoadTexture("C:\\Users\\Silvana\\Desktop\\Game - the game\\Sprites\\George_Pulo.png");
 
-    Sound footstepSound = LoadSound("D:\\Users\\dsfs\\Desktop\\Game\\The Game\\Single-footstep-in-grass-A.mp3");
-    Sound landingSound = LoadSound("D:\\Users\\dsfs\\Desktop\\Game\\The Game\\Single-footstep-in-grass-B.mp3");
-    Sound soundtrack = LoadSound("D:\\Users\\dsfs\\Desktop\\Game\\The Game\\8bit_Genshin_Impact___Faruzan_Theme_Master_of_Ingenious_Devices_Chiptune_CoverMP3_160K.mp3");
+    Sound footstepSound = LoadSound("C:\\Users\\Silvana\\Desktop\\Game - the game\\Sprites\\Single-footstep-in-grass-A.mp3");
+    Sound landingSound = LoadSound("C:\\Users\\Silvana\\Desktop\\Game - the game\\Sprites\\Single-footstep-in-grass-B.mp3");
+    Sound soundtrack = LoadSound("C:\\Users\\Silvana\\Desktop\\Game - the game\\8bit_Genshin_Impact___Faruzan_Theme_Master_of_Ingenious_Devices_Chiptune_CoverMP3_160K.mp3");
 
     unsigned int numFrames = 4; // Declarando o numero de frames da animacao 1 (correr)
     unsigned int numFrames2 = 1; // Declarando o numero de frames da animacao 2 (parar)
     int frameWidth = character.width / numFrames; // Comprimento de um frame da animacao 1
     int frame2Width = characterJump.width / numFrames2; // Comprimento de um frame da animacao 2
+    
+    float hitboxWidth = frameWidth/2.5;
+    float hitboxHeight = character.height/2.3;
 
     Rectangle frameRec = {0.0f, 0.0f, (float)frameWidth, (float)character.height};
     Rectangle frameRec2 = {0.0f, 0.0f, (float)frame2Width, (float)characterJump.height};
+    
+    Rectangle wall = { 300, GetScreenHeight()/2.0f - 50, 150, 165 }; // parede teste
 
     Player player = {0};
     player.characterPos = (Vector2) {groundYPos, screenHeight / 2.0f};
     player.characterVelocity = (Vector2) {0.0f, 0.0f};
     player.isJumping = false;
+    
+    Vector2 hitboxPos = player.characterPos;
+    
+    //Rectangle hitbox = {hitboxPos.x, hitboxPos.y, hitboxWidth, hitboxHeight};
+    
 
     // Crie um array de plataformas
     Platform platforms[4]; // 3 plataformas no exemplo
@@ -88,6 +99,7 @@ int main(void) {
     unsigned int frameDelay = 5;
     unsigned int frameDelayCounter = 0;
     unsigned int frameIndex = 0;
+    int flag1 = 0;
 
     SetTargetFPS(60);
     PlaySound(soundtrack);
@@ -95,20 +107,26 @@ int main(void) {
     bool jumpKeyPressed = false;
 
     while (!WindowShouldClose()) {
+        Rectangle hitbox = {hitboxPos.x, hitboxPos.y, hitboxWidth, hitboxHeight};
+        
+        
+        
+    //==========================================MOVIMENTACAO====================================================
         jumpKeyPressed = IsKeyDown(KEY_SPACE);
         //printf("\t%d\n", IsCharacterOnGround(character, player.characterPos, groundYPos, platforms, 4));
         
         // Verifique se o personagem está no chão antes de permitir o salto
-        if (IsCharacterOnGround(character, player.characterPos, groundYPos, platforms, 4)) {
+        if(IsCharacterOnGround(character, player.characterPos, groundYPos, platforms, 4)) {
             player.characterVelocity.y = 0;
             player.isJumping = false;
+           
 
-            if (jumpKeyPressed) {
+            if(jumpKeyPressed) {
                 player.characterVelocity.y = -4 * characterSpeed;
                 player.isJumping = true;
             }
 
-            if (IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT)) {
+            if(IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT)) {
                 player.characterVelocity.x = characterSpeed;
                 
                 if(frameRec.width < 0) {
@@ -116,7 +134,7 @@ int main(void) {
                     frameRec2.width = -frameRec2.width;
                 }
             } 
-            else if (IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT)) {
+            else if(IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT)) {
                 player.characterVelocity.x = -characterSpeed;
                 
                 if(frameRec.width > 0) {
@@ -126,7 +144,7 @@ int main(void) {
             } 
             else {
                 player.characterVelocity.x = 0;
-            }
+            } 
         } 
         else {
             player.isJumping = true;
@@ -151,10 +169,31 @@ int main(void) {
             else {
                 player.characterVelocity.x = 0;
             }
+            
+            if(!player.wasCharacterOnGround) {
+                PlaySound(landingSound);
+            }
         }
-        
-        player.characterMoving = player.characterVelocity.x != 0.0f || player.characterVelocity.y != 0.0f;
 
+    //==========================================HABILIDADES====================================================
+        // REALLOC
+        if(IsKeyPressed(KEY_R) && (flag1%2 == 0)) { // Se R for pressionado e a flag for par, entao ele vai diminuir o tamanho 
+            hitboxWidth = hitboxWidth / 2;
+            hitboxHeight = hitboxHeight / 2;
+            flag1++;
+        }
+        else if(IsKeyPressed(KEY_R) && (flag1%2 != 0)) { // Se R for pressionado e a flag nao for par, entao ele vai voltar ao tamanho padrao
+            hitboxWidth = frameWidth/2.5;
+            hitboxHeight = character.height/2.3;
+            flag1++;
+        }    
+    
+    
+
+    //==========================================ANIMACAO====================================================
+    
+        player.characterMoving = player.characterVelocity.x != 0.0f || player.characterVelocity.y != 0.0f;
+    
         frameDelayCounter++;
 
         if (frameDelayCounter > frameDelay) {
@@ -183,27 +222,52 @@ int main(void) {
                 }
             }
         }
+    //======================================================================================================
 
         // Atualização da posição do personagem
         player.characterPos = Vector2Add(player.characterPos, player.characterVelocity);
         player.characterIsOnGround = IsCharacterOnGround(character, player.characterPos, groundYPos, platforms, 4);
 
+        
+        if(flag1%2 == 0) {
+            hitbox.x = player.characterPos.x + 47;
+            hitbox.y = player.characterPos.y + 47;
+        }
+        else {
+            hitbox.x = player.characterPos.x + 60;
+            hitbox.y = player.characterPos.y + 80;
+        }
+            
+        wallCollision = CheckCollisionRecs(hitbox, wall); // Colosao com a parede teste
+        
         // Desenhar o restante do código...
         
         BeginDrawing();
+            
             ClearBackground(BLACK);
+            
             DrawTexture(background, screenWidth / 2 - background.width / 2, screenHeight / 2 - background.height / 2, WHITE);
+            
+            DrawRectangleRec(wall, GRAY);
 
-            //DrawRectangleRec((Rectangle){player.characterPos.x+55, player.characterPos.y+110, 40, 20}, YELLOW);
+            //DrawRectangleRec((Rectangle){player.characterPos.x+55, player.characterPos.y+110, 40, 20}, MAROON); // hitbox do pe
 
+            if(wallCollision) {
+                DrawText("COLISAO", 555, 350, 50, WHITE);
+            }    
+            
+            
             if(!player.characterMoving && player.characterIsOnGround) {
                 DrawTextureRec(character, frameRec, player.characterPos, WHITE);
+                DrawRectangleRec(hitbox, GOLD);
             }
             else if(!player.characterIsOnGround) {
                 DrawTextureRec(characterJump, frameRec2, player.characterPos, WHITE);
+                DrawRectangleRec(hitbox, GOLD);
             }    
             else {
                 DrawTextureRec(character , frameRec, player.characterPos, WHITE);
+                DrawRectangleRec(hitbox, GOLD);
             }
             
             // Desenhe as plataformas
