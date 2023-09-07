@@ -34,7 +34,7 @@ int main(void) {
 
     InitWindow(screenWidth, screenHeight, "Game - The game - test window");
     InitAudioDevice();
-    //ToggleFullscreen();
+    ToggleFullscreen();
 
     // Carregue as texturas e sons (ajuste os caminhos conforme necessário)
     Image image = LoadImage("C:\\Users\\Silvana\\Desktop\\Game - the game\\Sprites\\5.png");
@@ -51,6 +51,7 @@ int main(void) {
     Sound soundtrack = LoadSound("C:\\Users\\Silvana\\Desktop\\Game - the game\\8bit_Genshin_Impact___Faruzan_Theme_Master_of_Ingenious_Devices_Chiptune_CoverMP3_160K.mp3");
     Sound decrease = LoadSound("C:\\Users\\Silvana\\Desktop\\Game - the game\\Sprites\\diminuir.mp3");
     Sound increase = LoadSound("C:\\Users\\Silvana\\Desktop\\Game - the game\\Sprites\\aumentar.mp3");
+    Sound jump = LoadSound("C:\\Users\\Silvana\\Desktop\\Game - the game\\Sprites\\Pular.mp3");
 
     unsigned int numFrames = 4; // Declarando o numero de frames da animacao 1 (correr)
     unsigned int numFrames2 = 1; // Declarando o numero de frames da animacao 2 (pular)
@@ -174,6 +175,7 @@ int main(void) {
             if(jumpKeyPressed) {
                 player.characterVelocity.y = -4 * characterSpeed;
                 player.isJumping = true;
+                PlaySound(jump);
             }
 
             if(IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT)) {
