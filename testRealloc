@@ -44,16 +44,18 @@ int main(void) {
     Texture2D character = LoadTexture("C:\\Users\\Silvana\\Desktop\\Game - the game\\Sprites\\George (1).png");
     Texture2D characterLittle = LoadTexture("C:\\Users\\Silvana\\Desktop\\Game - the game\\Sprites\\Little_George.png");
     Texture2D characterJump = LoadTexture("C:\\Users\\Silvana\\Desktop\\Game - the game\\Sprites\\George_Pulo.png");
+    Texture2D characterLittleJump = LoadTexture("C:\\Users\\Silvana\\Desktop\\Game - the game\\Sprites\\Little_George_Pulo.png");
 
     Sound footstepSound = LoadSound("C:\\Users\\Silvana\\Desktop\\Game - the game\\Sprites\\Single-footstep-in-grass-A.mp3");
     Sound landingSound = LoadSound("C:\\Users\\Silvana\\Desktop\\Game - the game\\Sprites\\Single-footstep-in-grass-B.mp3");
     Sound soundtrack = LoadSound("C:\\Users\\Silvana\\Desktop\\Game - the game\\8bit_Genshin_Impact___Faruzan_Theme_Master_of_Ingenious_Devices_Chiptune_CoverMP3_160K.mp3");
 
     unsigned int numFrames = 4; // Declarando o numero de frames da animacao 1 (correr)
-    unsigned int numFrames2 = 1; // Declarando o numero de frames da animacao 2 (parar)
+    unsigned int numFrames2 = 1; // Declarando o numero de frames da animacao 2 (pular)
     int frameWidth = character.width / numFrames; // Comprimento de um frame da animacao 1
     int frameLittleWidth = characterLittle.width / numFrames;
     int frame2Width = characterJump.width / numFrames2; // Comprimento de um frame da animacao 2
+    int frame2LittleWidth = characterLittleJump.width / numFrames2;
     
     float hitboxWidth = frameWidth/2.5;
     float hitboxHeight = character.height/2.3;
@@ -121,12 +123,15 @@ int main(void) {
             
             if(frameRec.width < 0) {
                 frameRec.width = (float) -frameLittleWidth;
+                frameRec2.width = (float) -frame2LittleWidth;
             }
             else {
                 frameRec.width = (float) frameLittleWidth;
+                frameRec2.width = (float) frame2LittleWidth;
             }
             
             frameRec.height = (float) characterLittle.height;
+            frameRec2.height = (float) characterLittleJump.height;
             flag1++;
         }
         else if(IsKeyPressed(KEY_R) && (flag1%2 != 0)) { // Se R for pressionado e a flag nao for par, entao ele vai voltar ao tamanho padrao
@@ -135,12 +140,16 @@ int main(void) {
             
             if(frameRec.width < 0) {
                 frameRec.width = (float) -frameWidth;
+                frameRec2.width = (float) -frame2Width;
             }
             else {
                 frameRec.width = (float) frameWidth;
+                frameRec2.width = (float) frame2Width;
+                
             }    
             
             frameRec.height = (float) character.height;
+            frameRec2.height = (float) characterJump.height;
             flag1++;
         }
         
@@ -216,16 +225,16 @@ int main(void) {
     
         frameDelayCounter++;
 
-        if (frameDelayCounter > frameDelay) {
+        if(frameDelayCounter > frameDelay) {
             frameDelayCounter = 0;
 
-            if (player.characterMoving) { // Se o personagem estiver se movendo, atualiza o frame
+            if(player.characterMoving) { // Se o personagem estiver se movendo, atualiza o frame
                 
-                if (player.characterIsOnGround) {
+                if(player.characterIsOnGround) {
                     frameIndex++;
                     frameIndex %= numFrames;
 
-                    if (frameIndex == 0 || frameIndex == 2) {
+                    if(frameIndex == 0 || frameIndex == 2) {
                         PlaySound(footstepSound);
                     }
                     
@@ -237,7 +246,12 @@ int main(void) {
                     }    
                 } 
                 else {
-                    frameRec2.x = (float) frame2Width;
+                    if(flag1%2 != 0) {
+                        frameRec2.x = (float) frame2LittleWidth;
+                    }
+                    else {
+                        frameRec2.x = (float) frame2Width;
+                    }    
                 }
                 
             } 
@@ -259,7 +273,7 @@ int main(void) {
             hitbox.y = player.characterPos.y + 47;
         }
         else {
-            hitbox.x = player.characterPos.x + 60;
+            hitbox.x = player.characterPos.x + 70;
             hitbox.y = player.characterPos.y + 80;
         }
         
@@ -284,23 +298,30 @@ int main(void) {
                 DrawText("COLISAO", 555, 350, 50, WHITE);
             }    
             
-            
-            if(!player.characterMoving && player.characterIsOnGround) {
-                if(flag1%2 != 0) {
+            // Desenha o personagem:
+            if(!player.characterMoving && player.characterIsOnGround) { // parado e no chao
+                if(flag1%2 != 0) { 
                     DrawTextureRec(characterLittle , frameRec, player.characterLittlePos, WHITE);
+                    //DrawRectangleRec(hitbox, GOLD);
                 }
                 else {
                     DrawTextureRec(character, frameRec, player.characterPos, WHITE);
                     //DrawRectangleRec(hitbox, GOLD);
                 }    
             }
-            else if(!player.characterIsOnGround) {
-                DrawTextureRec(characterJump, frameRec2, player.characterPos, WHITE);
-                //DrawRectangleRec(hitbox, GOLD);
+            else if(!player.characterIsOnGround) { // pulando
+                if(flag1%2 != 0) {
+                    DrawTextureRec(characterLittleJump, frameRec2, player.characterLittlePos, WHITE);
+                    //DrawRectangleRec(hitbox, GOLD);
+                }
+                else {
+                    DrawTextureRec(characterJump, frameRec2, player.characterPos, WHITE);
+                }    
             }    
-            else {
+            else { // se movendo
                 if(flag1%2 != 0) {
                     DrawTextureRec(characterLittle , frameRec, player.characterLittlePos, WHITE);
+                    //DrawRectangleRec(hitbox, GOLD);
                 }
                 else {
                     DrawTextureRec(character , frameRec, player.characterPos, WHITE);
