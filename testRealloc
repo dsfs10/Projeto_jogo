@@ -49,6 +49,8 @@ int main(void) {
     Sound footstepSound = LoadSound("C:\\Users\\Silvana\\Desktop\\Game - the game\\Sprites\\Single-footstep-in-grass-A.mp3");
     Sound landingSound = LoadSound("C:\\Users\\Silvana\\Desktop\\Game - the game\\Sprites\\Single-footstep-in-grass-B.mp3");
     Sound soundtrack = LoadSound("C:\\Users\\Silvana\\Desktop\\Game - the game\\8bit_Genshin_Impact___Faruzan_Theme_Master_of_Ingenious_Devices_Chiptune_CoverMP3_160K.mp3");
+    Sound decrease = LoadSound("C:\\Users\\Silvana\\Desktop\\Game - the game\\Sprites\\diminuir.mp3");
+    Sound increase = LoadSound("C:\\Users\\Silvana\\Desktop\\Game - the game\\Sprites\\aumentar.mp3");
 
     unsigned int numFrames = 4; // Declarando o numero de frames da animacao 1 (correr)
     unsigned int numFrames2 = 1; // Declarando o numero de frames da animacao 2 (pular)
@@ -121,6 +123,8 @@ int main(void) {
             hitboxWidth = hitboxWidth / 2;
             hitboxHeight = hitboxHeight / 2;
             
+            PlaySound(decrease);
+            
             if(frameRec.width < 0) {
                 frameRec.width = (float) -frameLittleWidth;
                 frameRec2.width = (float) -frame2LittleWidth;
@@ -137,6 +141,8 @@ int main(void) {
         else if(IsKeyPressed(KEY_R) && (flag1%2 != 0)) { // Se R for pressionado e a flag nao for par, entao ele vai voltar ao tamanho padrao
             hitboxWidth = frameWidth/2.5;
             hitboxHeight = character.height/2.3;
+            
+            PlaySound(increase);
             
             if(frameRec.width < 0) {
                 frameRec.width = (float) -frameWidth;
