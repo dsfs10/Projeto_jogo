@@ -1,0 +1,390 @@
+#include "raylib.h"
+#include "raymath.h"
+
+#include <stdio.h>
+
+typedef struct {
+    Vector2 characterPos;
+    Vector2 characterLittlePos;
+    Vector2 characterVelocity;
+    bool characterMoving;
+    bool wasCharacterOnGround;
+    bool characterIsOnGround;
+    bool isJumping;
+} Player;
+
+typedef struct {
+    Vector2 enemyPos;
+    Vector2 enemyVelocity;
+    //Rectangle enemyHitbox;
+} Enemy;    
+
+typedef struct {
+    Rectangle rect; // Retângulo que representa a plataforma
+    Color color;    // Cor da plataforma (opcional)
+} Platform;
+
+bool IsCharacterOnGround(Texture2D character, Vector2 characterPos, const int groundYPos, Platform platforms[], int numPlatforms);
+
+int main(void) {
+    const int screenWidth = 1280;
+    const int screenHeight = 720;
+
+    const int characterSpeed = 5;
+    const int gravity = 1;
+    const int groundYPos = 3.1 * screenHeight / 4; // Posição do chão
+    int wallCollision = 0;
+    int enemyCollision1 = 0;
+
+    //const int jumpUpFrame = 3;
+    //const int jumpDownFrame = 4;
+
+    InitWindow(screenWidth, screenHeight, "Game - The game - test window");
+    InitAudioDevice();
+    //ToggleFullscreen();
+
+    // Carregue as texturas e sons (ajuste os caminhos conforme necessário)
+    Image image = LoadImage("D:\\Users\\dsfs\\Desktop\\Game\\5.png");
+    Texture2D background = LoadTextureFromImage(image);
+    UnloadImage(image);
+
+    Texture2D character = LoadTexture("D:\\Users\\dsfs\\Desktop\\Game\\George (1).png");
+    Texture2D characterLittle = LoadTexture("D:\\Users\\dsfs\\Desktop\\Game\\Little_George.png");
+    Texture2D characterJump = LoadTexture("D:\\Users\\dsfs\\Desktop\\Game\\George - Pulo.png");
+    Texture2D characterLittleJump = LoadTexture("D:\\Users\\dsfs\\Desktop\\Game\\Little_George_Pulo.png");
+
+    Sound footstepSound = LoadSound("D:\\Users\\dsfs\\Desktop\\Game\\Single-footstep-in-grass-A.mp3");
+    Sound landingSound = LoadSound("D:\\Users\\dsfs\\Desktop\\Game\\Single-footstep-in-grass-B.mp3");
+    Sound soundtrack = LoadSound("D:\\Users\\dsfs\\Desktop\\Game\\[8bit] Genshin Impact _ Faruzan Theme (Master of Ingenious Devices) [Chiptune Cover](MP3_160K).mp3");
+    Sound decrease = LoadSound("D:\\Users\\dsfs\\Desktop\\Game\\diminuir.mp3");
+    Sound increase = LoadSound("D:\\Users\\dsfs\\Desktop\\Game\\aumentar.mp3");
+    Sound jump = LoadSound("D:\\Users\\dsfs\\Desktop\\Game\\Pular.mp3");
+
+    unsigned int numFrames = 4; // Declarando o numero de frames da animacao 1 (correr)
+    unsigned int numFrames2 = 1; // Declarando o numero de frames da animacao 2 (pular)
+    int frameWidth = character.width / numFrames; // Comprimento de um frame da animacao 1
+    int frameLittleWidth = characterLittle.width / numFrames;
+    int frame2Width = characterJump.width / numFrames2; // Comprimento de um frame da animacao 2
+    int frame2LittleWidth = characterLittleJump.width / numFrames2;
+    
+    float hitboxWidth = frameWidth/2.5;
+    float hitboxHeight = character.height/2.3;
+
+    Rectangle frameRec = {0.0f, 0.0f, (float)frameWidth, (float)character.height};
+    Rectangle frameRec2 = {0.0f, 0.0f, (float)frame2Width, (float)characterJump.height};
+    
+    Rectangle wall = { 300, GetScreenHeight()/2.0f - 50, 150, 165 }; // parede teste
+
+    Player player = {0};
+    player.characterPos = (Vector2) {groundYPos, screenHeight / 2.0f};
+    player.characterVelocity = (Vector2) {0.0f, 0.0f};
+    player.isJumping = false;
+    
+    Enemy enemy = {0};
+    enemy.enemyPos = (Vector2) {groundYPos, screenHeight / 2.0f};
+    enemy.enemyVelocity = (Vector2) {0.0f, 0.0f};
+    
+    Vector2 hitboxPos = player.characterPos;
+    
+    //Rectangle hitbox = {hitboxPos.x, hitboxPos.y, hitboxWidth, hitboxHeight};
+    
+
+    // Crie um array de plataformas
+    Platform platforms[4]; // 3 plataformas no exemplo
+
+    // Defina as informações das plataformas
+    platforms[0].rect.x = 900.0f;
+    platforms[0].rect.y = groundYPos - 150.0f;
+    platforms[0].rect.width = 200.0f;
+    platforms[0].rect.height = 20.0f;
+    platforms[0].color = GRAY;
+
+    platforms[1].rect.x = 550.0f;
+    platforms[1].rect.y = groundYPos - 250.0f;
+    platforms[1].rect.width = 200.0f;
+    platforms[1].rect.height = 20.0f;
+    platforms[1].color = GRAY;
+
+    platforms[2].rect.x = 200.0f;
+    platforms[2].rect.y = groundYPos - 350.0f;
+    platforms[2].rect.width = 200.0f;
+    platforms[2].rect.height = 20.0f;
+    platforms[2].color = GRAY;
+
+    platforms[3].rect = (Rectangle) {0.0f ,522.0f, 1280.0f, 198.0f};
+    platforms[3].color = RED;
+
+
+    unsigned int frameDelay = 5;
+    unsigned int frameDelayCounter = 0;
+    unsigned int frameIndex = 0;
+    int flag1 = 0;
+
+    SetTargetFPS(60);
+    PlaySound(soundtrack);
+
+    bool jumpKeyPressed = false;
+
+    while (!WindowShouldClose()) {
+        Rectangle hitbox = {hitboxPos.x, hitboxPos.y, hitboxWidth, hitboxHeight};
+        Rectangle enemyHitbox = {800, 450, 50, 10};
+        
+        //============================================INIMIGO======================================================
+        if(enemyCollision1) {
+            enemyHitbox.x = 0;
+            enemyHitbox.y = 0;
+            enemyHitbox.width = 0;
+            enemyHitbox.height = 0;
+            
+        }    
+        
+        
+        //==========================================HABILIDADES====================================================
+        
+        // REALLOC
+        if(IsKeyPressed(KEY_R) && (flag1%2 == 0)) { // Se R for pressionado e a flag for par, entao ele vai diminuir o tamanho 
+            hitboxWidth = hitboxWidth / 2;
+            hitboxHeight = hitboxHeight / 2;
+            
+            PlaySound(decrease);
+            
+            if(frameRec.width < 0) {
+                frameRec.width = (float) -frameLittleWidth;
+                frameRec2.width = (float) -frame2LittleWidth;
+            }
+            else {
+                frameRec.width = (float) frameLittleWidth;
+                frameRec2.width = (float) frame2LittleWidth;
+            }
+            
+            frameRec.height = (float) characterLittle.height;
+            frameRec2.height = (float) characterLittleJump.height;
+            flag1++;
+        }
+        else if(IsKeyPressed(KEY_R) && (flag1%2 != 0)) { // Se R for pressionado e a flag nao for par, entao ele vai voltar ao tamanho padrao
+            hitboxWidth = frameWidth/2.5;
+            hitboxHeight = character.height/2.3;
+            
+            PlaySound(increase);
+            
+            if(frameRec.width < 0) {
+                frameRec.width = (float) -frameWidth;
+                frameRec2.width = (float) -frame2Width;
+            }
+            else {
+                frameRec.width = (float) frameWidth;
+                frameRec2.width = (float) frame2Width;
+                
+            }    
+            
+            frameRec.height = (float) character.height;
+            frameRec2.height = (float) characterJump.height;
+            flag1++;
+        }
+        
+        
+        
+    //==========================================MOVIMENTACAO====================================================
+        jumpKeyPressed = IsKeyDown(KEY_SPACE);
+        //printf("\t%d\n", IsCharacterOnGround(character, player.characterPos, groundYPos, platforms, 4));
+        
+        // Verifique se o personagem está no chão antes de permitir o salto
+        if(IsCharacterOnGround(character, player.characterPos, groundYPos, platforms, 4)) {
+            player.characterVelocity.y = 0;
+            player.isJumping = false;
+           
+
+            if(jumpKeyPressed) {
+                player.characterVelocity.y = -4 * characterSpeed;
+                player.isJumping = true;
+                PlaySound(jump);
+            }
+
+            if(IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT)) {
+                player.characterVelocity.x = characterSpeed;
+                
+                if(frameRec.width < 0) {
+                    frameRec.width = -frameRec.width;
+                    frameRec2.width = -frameRec2.width;
+                }
+            } 
+            else if(IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT)) {
+                player.characterVelocity.x = -characterSpeed;
+                
+                if(frameRec.width > 0) {
+                    frameRec.width = -frameRec.width;
+                    frameRec2.width = -frameRec2.width;
+                }
+            } 
+            else {
+                player.characterVelocity.x = 0;
+            } 
+        } 
+        else {
+            player.isJumping = true;
+            player.characterVelocity.y += gravity;
+
+            if (IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT)) {
+                player.characterVelocity.x = characterSpeed;
+                
+                if(frameRec.width < 0) {
+                    frameRec.width = -frameRec.width;
+                    frameRec2.width = -frameRec2.width;
+                }
+            } 
+            else if (IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT)) {
+                player.characterVelocity.x = -characterSpeed;
+                
+                if(frameRec.width > 0) {
+                    frameRec.width = -frameRec.width;
+                    frameRec2.width = -frameRec2.width;
+                }
+            } 
+            else {
+                player.characterVelocity.x = 0;
+            }
+            
+            if(!player.wasCharacterOnGround) {
+                PlaySound(landingSound);
+            }
+        }
+
+    //==========================================ANIMACAO====================================================
+    
+        player.characterMoving = player.characterVelocity.x != 0.0f || player.characterVelocity.y != 0.0f;
+    
+        frameDelayCounter++;
+
+        if(frameDelayCounter > frameDelay) {
+            frameDelayCounter = 0;
+
+            if(player.characterMoving) { // Se o personagem estiver se movendo, atualiza o frame
+                
+                if(player.characterIsOnGround) {
+                    frameIndex++;
+                    frameIndex %= numFrames;
+
+                    if(frameIndex == 0 || frameIndex == 2) {
+                        PlaySound(footstepSound);
+                    }
+                    
+                    if(flag1%2 != 0) {
+                        frameRec.x = (float) frameLittleWidth * frameIndex;
+                    }
+                    else {
+                        frameRec.x = (float) frameWidth * frameIndex;
+                    }    
+                } 
+                else {
+                    if(flag1%2 != 0) {
+                        frameRec2.x = (float) frame2LittleWidth;
+                    }
+                    else {
+                        frameRec2.x = (float) frame2Width;
+                    }    
+                }
+                
+            } 
+            else {
+                if(player.characterIsOnGround) {
+                    frameRec.x = (float) frameWidth * 2;
+                }
+            }
+        }
+    //======================================================================================================
+
+        // Atualização da posição do personagem
+        player.characterPos = Vector2Add(player.characterPos, player.characterVelocity);
+        player.characterIsOnGround = IsCharacterOnGround(character, player.characterPos, groundYPos, platforms, 4);
+
+        
+        if(flag1%2 == 0) {
+            hitbox.x = player.characterPos.x + 47;
+            hitbox.y = player.characterPos.y + 47;
+        }
+        else {
+            hitbox.x = player.characterPos.x + 70;
+            hitbox.y = player.characterPos.y + 80;
+        }
+        
+        player.characterLittlePos.x = player.characterPos.x + 50;
+        player.characterLittlePos.y = player.characterPos.y + 60;
+            
+        wallCollision = CheckCollisionRecs(hitbox, wall); // Colosao com a parede teste
+        enemyCollision1 = CheckCollisionRecs(enemyHitbox, (Rectangle){player.characterPos.x+55, player.characterPos.y+110, 40, 20});
+        
+        //==========================================DESENHAR====================================================
+        
+        BeginDrawing();
+            
+            ClearBackground(BLACK);
+            
+            DrawTexture(background, screenWidth / 2 - background.width / 2, screenHeight / 2 - background.height / 2, WHITE);
+            
+            DrawRectangleRec(wall, GRAY);
+
+            DrawRectangleRec((Rectangle){player.characterPos.x+55, player.characterPos.y+110, 40, 20}, MAROON); // hitbox do pe
+
+            if(wallCollision) {
+                DrawText("COLISAO", 555, 350, 50, WHITE);
+            }    
+            
+            // Desenha o personagem:
+            if(!player.characterMoving && player.characterIsOnGround) { // parado e no chao
+                if(flag1%2 != 0) { 
+                    DrawTextureRec(characterLittle , frameRec, player.characterLittlePos, WHITE);
+                    //DrawRectangleRec(hitbox, GOLD);
+                }
+                else {
+                    DrawTextureRec(character, frameRec, player.characterPos, WHITE);
+                    //DrawRectangleRec(hitbox, GOLD);
+                }    
+            }
+            else if(!player.characterIsOnGround) { // pulando
+                if(flag1%2 != 0) {
+                    DrawTextureRec(characterLittleJump, frameRec2, player.characterLittlePos, WHITE);
+                    //DrawRectangleRec(hitbox, GOLD);
+                }
+                else {
+                    DrawTextureRec(characterJump, frameRec2, player.characterPos, WHITE);
+                }    
+            }    
+            else { // se movendo
+                if(flag1%2 != 0) {
+                    DrawTextureRec(characterLittle , frameRec, player.characterLittlePos, WHITE);
+                    //DrawRectangleRec(hitbox, GOLD);
+                }
+                else {
+                    DrawTextureRec(character , frameRec, player.characterPos, WHITE);
+                    //DrawRectangleRec(hitbox, GOLD);
+                }
+            }
+            
+            // Desenha inimigo
+            if(!enemyCollision1) DrawRectangleRec(enemyHitbox, MAROON);
+            //if(enemyCollision1) {
+            //    DrawRectangleRec(enemyHitbox, BLUE);
+            //}    
+            
+            // Desenhe as plataformas
+            for (int i = 0; i < 3; i++) {
+                DrawRectangleRec(platforms[i].rect, platforms[i].color);
+            }
+
+        EndDrawing();
+    }
+
+    CloseAudioDevice();
+    CloseWindow();
+    return 0;
+}
+
+bool IsCharacterOnGround(Texture2D character, Vector2 characterPos, const int groundYPos, Platform platforms[], int numPlatforms) {
+    for(int i = 0; i < numPlatforms; i++) {
+        if (CheckCollisionRecs((Rectangle){characterPos.x+55, characterPos.y+110, 40, 20}, platforms[i].rect)) {
+            return true;
+        }
+    }
+
+    return false;
+}
