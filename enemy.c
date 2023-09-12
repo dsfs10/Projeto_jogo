@@ -57,7 +57,7 @@ int main(void) {
     Texture2D characterJump = LoadTexture("D:\\Users\\dsfs\\Desktop\\Game\\George - Pulo.png");
     Texture2D characterLittleJump = LoadTexture("D:\\Users\\dsfs\\Desktop\\Game\\Little_George_Pulo.png");
     
-    Texture2D enemyText = LoadTexture("D:\\Users\\dsfs\\Desktop\\Game\\goomba-png.png");
+    Texture2D enemyText = LoadTexture("D:\\Users\\dsfs\\Desktop\\Game\\goomba.png");
 
     Sound footstepSound = LoadSound("D:\\Users\\dsfs\\Desktop\\Game\\Single-footstep-in-grass-A.mp3");
     Sound landingSound = LoadSound("D:\\Users\\dsfs\\Desktop\\Game\\Single-footstep-in-grass-B.mp3");
@@ -125,7 +125,9 @@ int main(void) {
 
 
     unsigned int frameDelay = 5;
+    unsigned int frameEnemyDelay = 15;
     unsigned int frameDelayCounter = 0;
+    unsigned int frameDelayCounter2 = 0;
     unsigned int frameIndex = 0;
     unsigned int frameEnemyIndex = 0;
     int flag1 = 0;
@@ -162,10 +164,20 @@ int main(void) {
         
         
         // ANIMACAO DO INIMIGO
-        frameEnemyIndex++;
-        frameIndex %= numFrames;
+        frameDelayCounter2++;
         
-        frameEnemy.x = (float) frameEnemyWidth * frameEnemyIndex;
+        if(frameDelayCounter2 > frameEnemyDelay) {
+            frameDelayCounter2 = 0;
+        
+            frameEnemyIndex++;
+            frameIndex %= numFrames;
+            
+            if(frameEnemyIndex == 2) {
+                frameEnemyIndex = 0;
+            }    
+            
+            frameEnemy.x = (float) frameEnemyWidth * frameEnemyIndex;
+        }    
         
         
         
@@ -399,12 +411,11 @@ int main(void) {
                 }
             }
             
-            // Desenha inimigo
-            //DrawTextureRec(enemyText, frameEnemy, enemy.enemyPos, WHITE);
-            
+            // Desenha inimigo 
             if(enemy.collision_flag == 0) {
-                DrawRectangleRec(enemy.enemyHeadHitbox, MAROON);
-                DrawRectangleRec(enemy.enemyHitbox, BLUE);
+                DrawTextureRec(enemyText, frameEnemy, enemy.enemyPos, WHITE);
+                //DrawRectangleRec(enemy.enemyHeadHitbox, MAROON);
+                //DrawRectangleRec(enemy.enemyHitbox, BLUE);
             }
              
             
