@@ -16,7 +16,10 @@ typedef struct {
 typedef struct {
     Vector2 enemyPos;
     Vector2 enemyVelocity;
-    //Rectangle enemyHitbox;
+    Rectangle enemyHeadHitbox;
+    Rectangle enemyHitbox;
+    int collision_flag;
+    int flag_turn;
 } Enemy;    
 
 typedef struct {
@@ -31,6 +34,7 @@ int main(void) {
     const int screenHeight = 720;
 
     const int characterSpeed = 5;
+    const int enemySpeed = 2;
     const int gravity = 1;
     const int groundYPos = 3.1 * screenHeight / 4; // Posição do chão
     int wallCollision = 0;
@@ -52,6 +56,8 @@ int main(void) {
     Texture2D characterLittle = LoadTexture("D:\\Users\\dsfs\\Desktop\\Game\\Little_George.png");
     Texture2D characterJump = LoadTexture("D:\\Users\\dsfs\\Desktop\\Game\\George - Pulo.png");
     Texture2D characterLittleJump = LoadTexture("D:\\Users\\dsfs\\Desktop\\Game\\Little_George_Pulo.png");
+    
+    Texture2D enemyText = LoadTexture("D:\\Users\\dsfs\\Desktop\\Game\\goomba-png.png");
 
     Sound footstepSound = LoadSound("D:\\Users\\dsfs\\Desktop\\Game\\Single-footstep-in-grass-A.mp3");
     Sound landingSound = LoadSound("D:\\Users\\dsfs\\Desktop\\Game\\Single-footstep-in-grass-B.mp3");
@@ -67,21 +73,24 @@ int main(void) {
     int frame2Width = characterJump.width / numFrames2; // Comprimento de um frame da animacao 2
     int frame2LittleWidth = characterLittleJump.width / numFrames2;
     
+    int frameEnemyWidth = enemyText.width / 3;
+    
     float hitboxWidth = frameWidth/2.5;
     float hitboxHeight = character.height/2.3;
 
     Rectangle frameRec = {0.0f, 0.0f, (float)frameWidth, (float)character.height};
     Rectangle frameRec2 = {0.0f, 0.0f, (float)frame2Width, (float)characterJump.height};
+    Rectangle frameEnemy = {0.0f, 0.0f, (float)frameEnemyWidth, (float)enemyText.height};
     
     Rectangle wall = { 300, GetScreenHeight()/2.0f - 50, 150, 165 }; // parede teste
 
     Player player = {0};
-    player.characterPos = (Vector2) {groundYPos, screenHeight / 2.0f};
+    player.characterPos = (Vector2) {groundYPos, screenHeight / 2.0f}; // Posicao inicial do player
     player.characterVelocity = (Vector2) {0.0f, 0.0f};
     player.isJumping = false;
     
     Enemy enemy = {0};
-    enemy.enemyPos = (Vector2) {groundYPos, screenHeight / 2.0f};
+    enemy.enemyPos = (Vector2) {groundYPos, screenHeight / 1.6f}; // Posicao inicial do inimigo
     enemy.enemyVelocity = (Vector2) {0.0f, 0.0f};
     
     Vector2 hitboxPos = player.characterPos;
@@ -118,6 +127,7 @@ int main(void) {
     unsigned int frameDelay = 5;
     unsigned int frameDelayCounter = 0;
     unsigned int frameIndex = 0;
+    unsigned int frameEnemyIndex = 0;
     int flag1 = 0;
 
     SetTargetFPS(60);
@@ -127,16 +137,36 @@ int main(void) {
 
     while (!WindowShouldClose()) {
         Rectangle hitbox = {hitboxPos.x, hitboxPos.y, hitboxWidth, hitboxHeight};
-        Rectangle enemyHitbox = {800, 450, 50, 10};
+        enemy.enemyHeadHitbox = (Rectangle) {800, 450, 50, 10};
+        enemy.enemyHitbox = (Rectangle) {800, 450, 50, 60};
         
         //============================================INIMIGO======================================================
         if(enemyCollision1) {
-            enemyHitbox.x = 0;
-            enemyHitbox.y = 0;
-            enemyHitbox.width = 0;
-            enemyHitbox.height = 0;
-            
-        }    
+            enemy.collision_flag++;    
+        }
+        
+        if(enemy.enemyPos.x == 300) {
+            enemy.flag_turn = 0;
+        }
+        else if(enemy.enemyPos.x == 900){
+            enemy.flag_turn = 1;
+        }
+        
+        
+        if(enemy.flag_turn) {
+            enemy.enemyVelocity.x = -enemySpeed;
+        }
+        else {
+            enemy.enemyVelocity.x = enemySpeed;
+        }
+        
+        
+        // ANIMACAO DO INIMIGO
+        frameEnemyIndex++;
+        frameIndex %= numFrames;
+        
+        frameEnemy.x = (float) frameEnemyWidth * frameEnemyIndex;
+        
         
         
         //==========================================HABILIDADES====================================================
@@ -296,6 +326,8 @@ int main(void) {
         // Atualização da posição do personagem
         player.characterPos = Vector2Add(player.characterPos, player.characterVelocity);
         player.characterIsOnGround = IsCharacterOnGround(character, player.characterPos, groundYPos, platforms, 4);
+        
+        enemy.enemyPos = Vector2Add(enemy.enemyPos, enemy.enemyVelocity);
 
         
         if(flag1%2 == 0) {
@@ -309,9 +341,16 @@ int main(void) {
         
         player.characterLittlePos.x = player.characterPos.x + 50;
         player.characterLittlePos.y = player.characterPos.y + 60;
+        
+        
+        enemy.enemyHeadHitbox.x = enemy.enemyPos.x;
+        enemy.enemyHeadHitbox.y = enemy.enemyPos.y;
+        enemy.enemyHitbox.x = enemy.enemyPos.x;
+        enemy.enemyHitbox.y = enemy.enemyPos.y + 10;
+        
             
         wallCollision = CheckCollisionRecs(hitbox, wall); // Colosao com a parede teste
-        enemyCollision1 = CheckCollisionRecs(enemyHitbox, (Rectangle){player.characterPos.x+55, player.characterPos.y+110, 40, 20});
+        enemyCollision1 = CheckCollisionRecs(enemy.enemyHeadHitbox, (Rectangle){player.characterPos.x+55, player.characterPos.y+110, 40, 20});
         
         //==========================================DESENHAR====================================================
         
@@ -361,10 +400,13 @@ int main(void) {
             }
             
             // Desenha inimigo
-            if(!enemyCollision1) DrawRectangleRec(enemyHitbox, MAROON);
-            //if(enemyCollision1) {
-            //    DrawRectangleRec(enemyHitbox, BLUE);
-            //}    
+            //DrawTextureRec(enemyText, frameEnemy, enemy.enemyPos, WHITE);
+            
+            if(enemy.collision_flag == 0) {
+                DrawRectangleRec(enemy.enemyHeadHitbox, MAROON);
+                DrawRectangleRec(enemy.enemyHitbox, BLUE);
+            }
+             
             
             // Desenhe as plataformas
             for (int i = 0; i < 3; i++) {
